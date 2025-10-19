@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { useEffect } from 'react';
 import ReactPaginate from 'react-paginate';
 
-function LogList({ logs, updateLog, setShowAuthModal }) {
-    const {user} = useAuth(); // user from context
-    const [editingId, setEditingId] = useState(null);
+function LogList({ logs, updateLog, onDeleteLog }) {
     const [editText, setEditText] = useState('');
     const [filteredLogs, setFilteredLogs] = useState([]);
     const [startDate, setStartDate] = useState('');
@@ -65,22 +63,23 @@ function LogList({ logs, updateLog, setShowAuthModal }) {
     };
 
     const startEdit = (log) => {
-        setEditingId(log.id);
         setEditText(typeof log === 'string' ? log : log.text);
     };
 
     const saveEdit = (id) => {
         if (editText.trim()) {
             updateLog(id, editText.trim());
-            setEditingId(null);
             setEditText('');
         }
     };
 
     const cancelEdit = () => {
-        setEditingId(null);
         setEditText('');
     };
+
+    if (!logs || logs.length === 0) {
+        return <p>No logs yet.</p>;
+    }
 
     return (
         <div className="w-full max-w-md mt-8 bg-white shadow-md rounded-2xl p-6">
@@ -119,48 +118,33 @@ function LogList({ logs, updateLog, setShowAuthModal }) {
                                 </div>
 
                             )}
-                        </div>
-                    </div>
-                    {filteredLogs.length > 0 ? (
-                      <>
-                        <ul className="list-disc list-inside space-y-2 text-gray-700">
-                            {currentLogs.map((log, index) => (
-                                <li
-                                    key={log.id || index}
-                                    className="bg-gray-100 p-3 rounded-lg flex justify-between items-center"
-                                >
-                                    <span className="text-gray-800">
-                                        {log.text}
-                                    </span>
-                                    {log.date && (
-                                        <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                                            {log.date}
-                                        </span>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                        {pageCount > 1 && (
-                                <ReactPaginate
-                                    previousLabel="←"
-                                    nextLabel="→"
-                                    pageCount={pageCount}
-                                    onPageChange={handlePageClick}
-                                    containerClassName="flex items-center justify-center gap-2 mt-4"
-                                    pageClassName="px-3 py-1 rounded hover:bg-gray-100"
-                                    pageLinkClassName="text-indigo-600"
-                                    previousClassName="px-3 py-1 rounded hover:bg-gray-100"
-                                    nextClassName="px-3 py-1 rounded hover:bg-gray-100"
-                                    previousLinkClassName="text-indigo-600"
-                                    nextLinkClassName="text-indigo-600"
-                                    activeClassName="bg-indigo-600"
-                                    activeLinkClassName="text-white hover:text-white"
-                                    disabledClassName="text-gray-300 hover:bg-transparent cursor-not-allowed"
-                                />
-                            )}
-                            </>
-                    ) : (
-                        <p className="text-gray-500 italic">No logs found.</p>
+                            <button
+                                className="ml-4 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                onClick={() => onDeleteLog(index)}
+                                aria-label="Delete log"
+                            >
+                                Delete
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+                {pageCount > 1 && (
+                        <ReactPaginate
+                            previousLabel="←"
+                            nextLabel="→"
+                            pageCount={pageCount}
+                            onPageChange={handlePageClick}
+                            containerClassName="flex items-center justify-center gap-2 mt-4"
+                            pageClassName="px-3 py-1 rounded hover:bg-gray-100"
+                            pageLinkClassName="text-indigo-600"
+                            previousClassName="px-3 py-1 rounded hover:bg-gray-100"
+                            nextClassName="px-3 py-1 rounded hover:bg-gray-100"
+                            previousLinkClassName="text-indigo-600"
+                            nextLinkClassName="text-indigo-600"
+                            activeClassName="bg-indigo-600"
+                            activeLinkClassName="text-white hover:text-white"
+                            disabledClassName="text-gray-300 hover:bg-transparent cursor-not-allowed"
+                        />
                     )}
                 </>
             ) : (

@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext.jsx';
-import AuthModal from './utils/AuthModal';
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar.jsx";
 import Header from "./components/Header";
 import LogInput from "./components/LogInput";
@@ -161,109 +158,89 @@ export default function App() {
     return 'Generate Summary';
   };
 
-  return (
-      <Router>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-5 font-mono transition-colors duration-300">
-          <Navbar setShowAuthModal={setShowAuthModal} />
-          
-          <Routes>
-            <Route 
-              path="/" 
-              element={
-                <div className="w-full flex flex-col items-center">
-                  <Header />
-                  <ViewToggle currentView={viewMode} onViewChange={handleViewChange} />
-                  
-                  {/* Search and Filter Section */}
-                  <SearchAndFilter
-                    logs={logs}
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    selectedTags={selectedTags}
-                    setSelectedTags={setSelectedTags}
-                  />
-                  
-                  <LogInput
-                    maxChars={maxChars}
-                    input={input}
-                    setInput={setInput}
-                    addLog={addLog}
-                    logs={logs}
-                    setShowAuthModal={setShowAuthModal}
-                  />
-                  
-                  {/* Conditional Rendering based on view mode */}
-                  {viewMode === 'list' ? (
-                    <LogList 
-                      logs={filteredLogs} 
-                      updateLog={updateLog} 
-                      searchTerm={searchTerm}
-                      selectedTags={selectedTags}
-                      onTagClick={handleTagClick}
-                      setShowAuthModal={setShowAuthModal}
-                    />
-                  ) : (
-                    <>
-                      <Calendar
-                        logs={logs}
-                        selectedDate={selectedDate}
-                        onDateSelect={handleDateSelect}
-                        searchTerm={searchTerm}
-                        selectedTags={selectedTags}
-                      />
-                      <DateLogViewer
-                        selectedDate={selectedDate}
-                        logs={logs}
-                        updateLog={updateLog}
-                        onTagClick={handleTagClick}
-                        searchTerm={searchTerm}
-                        selectedTags={selectedTags}
-                      />
-                    </>
-                  )}
-                  
-                  <div className="w-full max-w-md mt-6">
-                    <div className="flex gap-4">
-                      <button
-                        onClick={generateSummary}
-                        className="bg-green-500 dark:bg-green-600 text-white px-4 py-2 rounded hover:bg-green-600 dark:hover:bg-green-700 transition-colors duration-300"
-                        title={
-                          viewMode === 'calendar' && selectedDate
-                            ? `Generate summary from logs on ${selectedDate.toLocaleDateString()}`
-                            : filteredLogs.length !== logs.length
-                            ? `Generate summary from ${filteredLogs.length} filtered logs`
-                            : "Generate summary from all logs"
-                        }
-                      >
-                        {getSummaryButtonText()}
-                      </button>
-                      <button
-                        onClick={exportAllLogs}
-                        className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300"
-                        title="Download all logs as CSV"
-                      >
-                        Export CSV
-                      </button>
-                      <button
-                        onClick={clearLogs}
-                        className="bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600 dark:hover:bg-red-700 transition-colors duration-300 ml-2"
-                      >
-                        Clear All
-                      </button>
-                    </div>
-                    <Summary summary={summary} />
-                  </div>
-                  <WeeklySummaryGraph logs={logs} />
-                  <Footer />
-                </div>
-              } 
-            />
-          </Routes>
+  // Delete log by index (or use a unique id if available)
+  const handleDeleteLog = (index) => {
+    const updatedLogs = logs.filter((_, i) => i !== index);
+    setLogs(updatedLogs);
+    localStorage.setItem("logs", JSON.stringify(updatedLogs));
+  };
 
-          <AuthModal 
-            isOpen={showAuthModal} 
-            onClose={() => setShowAuthModal(false)} 
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-5 font-mono transition-colors duration-300">
+      <Navbar />
+      <Header logs={logs} />
+      
+      {/* View Toggle */}
+      <ViewToggle currentView={viewMode} onViewChange={handleViewChange} />
+      
+      {/* Search and Filter Section */}
+      <SearchAndFilter
+        logs={logs}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
+      />
+      
+      <LogInput
+        maxChars={maxChars}
+        input={input}
+        setInput={setInput}
+        addLog={addLog}
+        logs={logs}
+      />
+      
+      {/* Conditional Rendering based on view mode */}
+      {viewMode === 'list' ? (
+        <LogList 
+          logs={logs} 
+          updateLog={updateLog} 
+          searchTerm={searchTerm}
+          selectedTags={selectedTags}
+          onTagClick={handleTagClick}
+          onDeleteLog={handleDeleteLog}
+        />
+      ) : (
+        <>
+          <Calendar
+            logs={logs}
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            searchTerm={searchTerm}
+            selectedTags={selectedTags}
           />
+          <DateLogViewer
+            selectedDate={selectedDate}
+            logs={logs}
+            updateLog={updateLog}
+            onTagClick={handleTagClick}
+            searchTerm={searchTerm}
+            selectedTags={selectedTags}
+          />
+        </>
+      )}
+      
+      <div className="w-full max-w-md mt-6">
+        <div className="flex gap-4">
+          <button
+            onClick={generateSummary}
+            className="summary"
+            title={
+              viewMode === 'calendar' && selectedDate
+                ? `Generate summary from logs on ${selectedDate.toLocaleDateString()}`
+                : filteredLogs.length !== logs.length
+                ? `Generate summary from ${filteredLogs.length} filtered logs`
+                : "Generate summary from all logs"
+            }
+          >
+            {getSummaryButtonText()}
+          </button>
+          <button
+            onClick={clearLogs}
+            className="bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded hover:bg-red-600 dark:hover:bg-red-700 transition-colors duration-300 ml-2"
+          >
+            Clear All
+          </button>
         </div>
       </Router>
   );
